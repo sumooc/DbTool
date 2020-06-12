@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xiwei.sumooc.mapper.OperateDbDao">
+
+    <select id="getDataById" resultType="java.util.Map">
+		select * from admin where aid = #{id}
+	</select>
+
+    <select id="getDataByMap" resultType="java.util.Map" parameterType="java.util.Map">
+
+	</select>
+
+	<select id="getAllDataByMap" resultType="java.util.Map" parameterType="java.util.Map">
+		SELECT  * FROM
+		(
+		SELECT
+		'门特' as  FEE_SOURCE,
+		DEP_CODE AS CODE,
+		DEP_NAME  AS NAME,
+		SUM(BILL_CNT) AS BILL_CNT,
+		SUM(BILL_AMT) AS  BILL_AMT,
+		SUM(DECODE(SIGN(AUTO_CHECK_RULE_ID),0,AUTO_CHECK_CNT,0)) AS  AUTO_CHECK_BILL_CNT,
+		SUM(DECODE(SIGN(AUTO_CHECK_RULE_ID),0,AUTO_CHECK_DEDUC_AMT,0)) AS  AUTO_CHECK_BILL_AMT
+		FROM
+		T_DATA_PRES_BILL
+		WHERE
+		(#{depCode} IS NULL OR DEP_CODE= #{depCode})
+		AND (#{batchId} IS NULL OR BATCH_ID = #{batchId})
+		AND (#{orgId} IS NULL OR ORG_ID  = #{orgId})
+		AND (#{siTypeId} IS NULL OR SI_TYPE_ID = #{siTypeId})
+		AND  HOSP_ID = #{hospId}
+		AND AUTO_CHECK_RULE_ID IS NOT NULL
+		AND (BILL_DT >= TO_DATE('${dtFrom}', 'yyyy-MM-dd HH24:mi:ss'))
+		AND (BILL_DT &lt;= TO_DATE('${dtTo}', 'yyyy-MM-dd HH24:mi:ss'))
+		GROUP BY
+		DEP_CODE,DEP_NAME
+		UNION ALL
+		SELECT
+		'住院'  as  FEE_SOURCE,
+		CUR_DEP_CODE    AS CODE,
+		CUR_DEP_NAME   AS NAME,
+		SUM(BILL_CNT) AS BILL_CNT,
+		SUM(BILL_AMT) AS  BILL_AMT,
+		SUM(DECODE(SIGN(AUTO_CHECK_RULE_ID),0,AUTO_CHECK_CNT,0)) AS  AUTO_CHECK_BILL_CNT,
+		SUM(DECODE(SIGN(AUTO_CHECK_RULE_ID),0,AUTO_CHECK_DEDUC_AMT,0)) AS  AUTO_CHECK_BILL_AMT
+		FROM
+		T_DATA_INBED_BILL
+		WHERE
+		(#{depCode} IS NULL OR CUR_DEP_CODE= #{depCode})
+		AND (#{batchId} IS NULL OR BATCH_ID = #{batchId})
+		AND (#{orgId} IS NULL OR ORG_ID  = #{orgId})
+		AND (#{siTypeId} IS NULL OR SI_TYPE_ID = #{siTypeId})
+		AND  HOSP_ID = #{hospId}
+		AND AUTO_CHECK_RULE_ID IS NOT NULL
+		AND (BILL_DT >= TO_DATE('${dtFrom}', 'yyyy-MM-dd HH24:mi:ss'))
+		AND (BILL_DT &lt;= TO_DATE('${dtTo}', 'yyyy-MM-dd HH24:mi:ss'))
+		GROUP BY CUR_DEP_CODE,CUR_DEP_NAME
+		)
+		ORDER BY
+		AUTO_CHECK_BILL_AMT DESC
+	</select>
+
+</mapper>
